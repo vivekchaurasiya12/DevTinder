@@ -1,25 +1,118 @@
-const express = require("express")
+// ✅ Importing Express module
+const express = require("express");
 
+// ✅ Creating an Express application instance
 const app = express();
 
-app.use("/helo",(req,res)=>{
-    //this arrow function is request handler
-    res.send("helo this is the server")
-})
-
-app.use("/test",(req,res)=>{
-    //this arrow function is request handler
-    res.send("helo this is the test ")
-})
-
 /* 
- ✅ Start the server
- - app.listen() takes a port number and a callback
- - Callback runs once the server starts successfully
+----------------------------------------------------
+ 🔹 CRUD Routes for /user endpoint
+----------------------------------------------------
+Each route demonstrates different HTTP methods:
+GET → Fetch data
+POST → Create data
+PUT → Update data
+DELETE → Delete data
 */
-app.listen(3000,()=>{
-    console.log("server is running on port 3000")
+
+// ➤ GET request → Used to fetch data from server
+app.get("/user", (req, res) => {
+  res.send({ firstname: "Vivek Kumar", lastname: "Chaurasiya" });
 });
 
-// nodemon is a development tool that automatically restarts your Node.js server whenever you make changes to your code.
-// Restart server after any code change if nodemon is not used.
+// ➤ DELETE request → Used to delete data from server
+app.delete("/user", (req, res) => {
+  res.send("User deleted successfully");
+});
+
+// ➤ POST request → Used to send or create data on server
+app.post("/user", (req, res) => {
+  res.send("Data saved successfully");
+});
+
+// ➤ PUT request → Used to update or modify existing data
+app.put("/user", (req, res) => {
+  res.send("Data updated successfully");
+});
+
+/* 
+----------------------------------------------------
+ 🔹 Params Example (Dynamic Routes)
+----------------------------------------------------
+Example URL → /user/101
+Use → req.params.id
+→ "params" are part of the URL path, used for dynamic values.
+*/
+app.get("/user/:id", (req, res) => {
+  const userId = req.params.id; // Accessing dynamic parameter
+  res.send(`Details of user with ID: ${userId}`);
+});
+
+/* 
+----------------------------------------------------
+ 🔹 Query Example
+----------------------------------------------------
+Example URL → /search?city=ghaziabad&age=23
+Use → req.query.city , req.query.age
+→ "query parameters" are used to send filters or search options.
+*/
+app.get("/search", (req, res) => {
+  const { city, age } = req.query; // Accessing query parameters
+  res.send(`Searching users from ${city}, Age: ${age}`);
+});
+
+/* 
+----------------------------------------------------
+ 🔹 Additional Notes (Commented Examples)
+----------------------------------------------------
+
+// app.use("/helo",(req,res)=>{
+//     res.send("Hello this is the server");
+// })
+
+// app.use("/test",(req,res)=>{
+//     res.send("Hello this is the test route");
+// })
+
+// app.use("/",(req,res)=>{
+//     res.send("Hello World");
+// })
+*/
+
+/* 
+----------------------------------------------------
+ ✅ Start the Server
+----------------------------------------------------
+app.listen() → Starts the Express server
+Takes 2 parameters:
+1️⃣ Port number (e.g., 3000)
+2️⃣ Callback function → runs after server starts
+*/
+app.listen(3000, () => {
+  console.log("✅ Server is running on port 3000");
+});
+
+/* 
+----------------------------------------------------
+ 🔹 Important Notes for Revision
+----------------------------------------------------
+
+🧠 “Order of routes matters a lot”
+------------------------------------
+- Express checks routes in sequence (top to bottom)
+- Once a matching route is found, it stops checking others
+- Hence, define specific routes first (like /test)
+- Define generic routes or wildcard (*) routes at the end
+
+Example:
+If "/" is above "/test", it may catch all requests before "/test" is ever reached.
+
+------------------------------------
+💡 About Nodemon:
+------------------------------------
+- Nodemon is a development tool that automatically restarts 
+  your Node.js server whenever you make code changes.
+- Run:  👉  npm install -g nodemon
+- Start server with: 👉 nodemon index.js
+- Without nodemon, you need to restart server manually every time.
+*/
