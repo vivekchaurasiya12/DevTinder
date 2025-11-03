@@ -1,33 +1,22 @@
 
 const express = require("express");
-
+const {authRequest,userAuth} = require("./middleware/Auth")
 const app = express();
 
+app.use("/admin",authRequest)
 
-//CASE 1
-app.get("/user",(req,res,next)=>{
-    res.send("User data fetch successfully")
-    next() // ❌ Problem: next() is called after sending a response
-},
-(req,res)=>{
-    res.send("This is second response"); // ❌ Trying to send again
+app.get("/admin/getAllData",(req,res)=>{
+    res.send("all data sent");
 })
-/*
-Here’s what happens step-by-step:
-The first handler sends a response (res.send()).
-Then you call next(), telling Express to continue to the next handler.
-The second handler also tries to send a response.
-But Express has already sent one, so it throws the error.
- */
+app.get("/admin/deleteAdmin",(req,res)=>{
+    res.send("Admin Deleted");
+})
 
-//CASE 2
-app.get("/test",(req,res,next)=>{
-    next() // ❌ Problem: next() is called BEFORE sending a response
-    res.send("User data fetch successfully") // ❌ Trying to send again    
-},
-(req,res)=>{
-    res.send("This is second response"); 
+app.get("/user/getAll",userAuth,(req,res)=>{
+    res.send("all user sent");
 })
+
+
 
 
 app.listen(3000, () => {
