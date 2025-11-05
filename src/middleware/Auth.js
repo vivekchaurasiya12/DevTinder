@@ -1,21 +1,19 @@
- const authRequest =  (req,res,next)=>{
-    const token  = "fhrjfdxnef";//req.body.token
-    const isTokenAuthorized = token==="xyz";
-    if(!isTokenAuthorized){
-        res.status(401).send("Unauthorized Request");
-    }else{
-       next();
+const jwt = require("jsonwebtoken");
+
+const userAuth = (req, res, next) => {
+  try {
+    const token = req.cookies.token; // Extract from cookie
+    if (!token) {
+      return res.status(401).json({ message: "Unauthorized! Token not found" });
     }
-}
- const userAuth =  (req,res,next)=>{
-    const token  = "fhrjfdxnef";//req.body.token
-    const isTokenAuthorized = token==="fhrjfdxnef";
-    if(!isTokenAuthorized){
-        res.status(401).send("Unauthorized Request");
-    }else{
-       next();
-    }
-}
-module.exports ={
-    authRequest,userAuth
-}
+
+    // Verify token
+    const decoded = jwt.verify(token, "fuefhecfindcjdifhurh");
+    req.user = decoded; // store user info for next handlers
+    next();
+  } catch (err) {
+    res.status(401).json({ message: "Invalid or expired token" });
+  }
+};
+
+module.exports = { userAuth };
