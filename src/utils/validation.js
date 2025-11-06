@@ -50,4 +50,4 @@ const validation = (req) => {
   }
 };
 
-module.exports = { validation };
+module.exports = validation;
