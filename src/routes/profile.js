@@ -1,8 +1,9 @@
 const express = require("express");
 const { userAuth } = require("../middleware/Auth");
 const profileRouter = express.Router();
+const bcrypt = require("bcrypt");
 const User = require("../modals/user");
-const {validateProfileEdit} = require("../utils/validation")
+const {validateProfileEdit, passwordValidation} = require("../utils/validation")
 
 profileRouter.get('/profile', userAuth, async (req, res) => {
   try {
@@ -53,6 +54,41 @@ profileRouter.patch('/profile/edit', userAuth, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+
+profileRouter.patch("/profile/password", userAuth, async (req, res) => {
+  try {
+    const { oldPassword, newPassword, confirmPassword } = req.body;
+     // ✅ Step 1: Validate inputs
+    passwordValidation(oldPassword, newPassword, confirmPassword);
+    
+
+    // ✅ Step 2: Find the logged-in user
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // ✅ Step 3: Verify old password
+    const isPasswordValid = await bcrypt.compare(oldPassword, user.password);
+    if (!isPasswordValid) {
+      return res.status(400).json({ message: "Old password is incorrect" });
+    }
+
+    // ✅ Step 4: Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // ✅ Step 5: Update user password
+    user.password = hashedPassword;
+    await user.save();
+
+    res.status(200).json({ message: "Password updated successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 
 // ✅ Delete user (pass id through body)

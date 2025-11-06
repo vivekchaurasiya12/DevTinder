@@ -59,5 +59,14 @@ const allowedEditField = ["firstName","lastName","age","gender","photoUrl","abou
    return isEditAllowed
 
 }
+const passwordValidation = (oldPassword,newPassword,confirmPassword)=>{
+   if (!oldPassword || !newPassword || !confirmPassword) {
+    throw new Error("All fields are required");
+  }
 
-module.exports = {validation,validateProfileEdit};
+  if (newPassword !== confirmPassword) {
+    throw new Error("New password and confirm password do not match");
+  }
+}
+
+module.exports = {validation,validateProfileEdit,passwordValidation};

@@ -6,7 +6,6 @@ const userAuth = (req, res, next) => {
     if (!token) {
       return res.status(401).json({ message: "Unauthorized! Token not found" });
     }
-
     // Verify token
     const decoded = jwt.verify(token, "fuefhecfindcjdifhurh");
     req.user = decoded; // store user info for next handlers
