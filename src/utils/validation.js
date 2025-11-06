@@ -50,4 +50,14 @@ const validation = (req) => {
   }
 };
 
-module.exports = validation;
+const validateProfileEdit = (req)=>{
+const allowedEditField = ["firstName","lastName","age","gender","photoUrl","about","skills"]
+      const updates = Object.keys(req.body).filter((field) => field !== "_id");
+  const isEditAllowed = updates.every((field) =>
+    allowedEditField.includes(field)
+  );
+   return isEditAllowed
+
+}
+
+module.exports = {validation,validateProfileEdit};
