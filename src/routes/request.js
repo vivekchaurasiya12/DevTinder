@@ -82,5 +82,57 @@ requestRouter.post("/request/send/:status/:toUserId", userAuth, async (req, res)
   }
 });
 
+ /*
+  ============================================================
+   📌 API: POST /request/review/:status/:requestId
+   PURPOSE: Review a received connection request (accept or reject).
+   MIDDLEWARE: userAuth → ensures the user is authenticated.
+  ============================================================
+*/
+requestRouter.post("/request/review/:status/:requestId", userAuth, async (req, res) => {
+  try {
+    // Step 1️⃣ - Extract parameters and logged-in user info
+    const { status, requestId } = req.params;
+   
+    const loggedInUser = req.user;
+    console.log(loggedInUser)
+
+    // Step 2️⃣ - Allow only accepted/rejected as valid statuses
+    const allowedRequest = ["accepted", "rejected"];
+    if (!allowedRequest.includes(status)) {
+      throw new Error("Request not allowed. Status must be 'accepted' or 'rejected'.");
+    }
+
+    // Step 3️⃣ - Find the connection request in DB
+    // The logged-in user should be the recipient (toUserId)
+    // And request must currently be in 'interested' state
+    const connectionUser = await ConnectionRequest.findOne({
+      _id: requestId,
+      toUserId: loggedInUser.id,
+      status: "interested" // must match the enum spelling
+    });
+
+    if (!connectionUser) {
+      throw new Error("Connection request not found or already reviewed.");
+    }
+
+    // Step 4️⃣ - Update the status to accepted/rejected
+    connectionUser.status = status;
+
+    // Step 5️⃣ - Save the updated document
+    const data = await connectionUser.save();
+
+    // Step 6️⃣ - Send success response
+    res.json({
+      message: `Connection request ${status === "accepted" ? "accepted 🎉" : "rejected ❌"}`,
+      data,
+    });
+
+  } catch (err) {
+    // Step 7️⃣ - Handle errors gracefully
+    res.status(400).json({ error: err.message });
+  }
+});
+
 // Export the router so it can be used in main app.js / server.js
 module.exports = requestRouter;
