@@ -1,6 +1,7 @@
 // Import express and create a new router instance
 const express = require("express");
 const userRouter = express.Router();
+const redisClient = require("../config/redis");
 
 // Import the authentication middleware to verify the logged-in user
 const { userAuth } = require("../middleware/Auth");
@@ -118,16 +119,29 @@ userRouter.get("/user/connections", userAuth, async (req, res) => {
 
 
 userRouter.get("/feed", userAuth, async (req, res) => {
+  console.log("Feed route hit ✅");
+
   try {
     const loggedInUser = req.user;
-    const page = parseInt(req.query.page) || 1;
-    let limit = parseInt(req.query.limit) || 10;
-    limit = limit > 50 ? 50 : limit;
-    const skip = (page - 1) * limit;
+    const cacheKey = `feed:${loggedInUser.id.toString()}`;
 
+    // 1️⃣ Check if feed data is already cached in Redis
+    const cachedFeed = await redisClient.get(cacheKey);
+    if (cachedFeed) {
+      console.log("✅ Serving feed from Redis cache");
+      return res.json({
+        source: "cache",
+        data: JSON.parse(cachedFeed),
+      });
+    }
+
+    // 2️⃣ If not cached → Fetch from MongoDB
     const connectionRequests = await ConnectionRequest.find({
-      $or: [{ fromUserId: loggedInUser.id }, { toUserId: loggedInUser.id }],
-    }).select("fromUserId  toUserId");
+      $or: [
+        { fromUserId: loggedInUser.id },
+        { toUserId: loggedInUser.id },
+      ],
+    }).select("fromUserId toUserId");
 
     const hideUsersFromFeed = new Set();
     connectionRequests.forEach((req) => {
@@ -136,19 +150,22 @@ userRouter.get("/feed", userAuth, async (req, res) => {
     });
 
     const users = await User.find({
-      $and: [
-        { _id: { $nin: Array.from(hideUsersFromFeed) } },
-        { _id: { $ne: loggedInUser.id   } },
-      ],
-    })
-      .select(USER_SAFE_DATA)
-      .skip(skip)
-      .limit(limit);
-    res.json({ data: users });
+      _id: { $nin: Array.from(hideUsersFromFeed).concat([loggedInUser.id]) },
+    }).select(USER_SAFE_DATA);
+
+    // 3️⃣ Save fetched data to Redis cache (with TTL = 60s)
+    await redisClient.setEx(cacheKey, 60, JSON.stringify(users));
+    console.log("💾 Feed cached in Redis");
+
+    res.json({
+      source: "database",
+      data: users,
+    });
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 });
+
 
 /*
   ============================================================
